@@ -1,0 +1,2 @@
+D:/coding/Cursor testing/myfinance/android/app/.cxx/Debug/4l2j6jc5/x86_64/CMakeFiles/edit_cache.dir
+D:/coding/Cursor testing/myfinance/android/app/.cxx/Debug/4l2j6jc5/x86_64/CMakeFiles/rebuild_cache.dir

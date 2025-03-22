@@ -8,7 +8,10 @@ import 'screens/settings_screen.dart';
 import 'screens/add_transaction_screen.dart';
 import 'services/notification_service.dart';
 import 'screens/splash_screen.dart';
+import 'screens/auth_check_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'services/auth_service.dart';
+import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,7 +76,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         debugShowCheckedModeBanner: false,
-        home: const SplashScreen(),
+        home: const SplashScreen(nextScreen: AuthCheckScreen()),
         routes: {
           '/add_transaction': (context) => const AddTransactionScreen(),
         },
@@ -98,6 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
     const TransactionListScreen(),
     // const SettingsScreen(),
   ];
+  final _authService = AuthService();
 
   @override
   void initState() {
@@ -121,9 +125,28 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void _logout() async {
+    await _authService.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('MyFinance'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
