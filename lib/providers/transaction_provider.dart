@@ -2,12 +2,15 @@ import 'package:flutter/foundation.dart';
 import '../models/transaction.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
+import '../providers/budget_provider.dart';
+import 'package:provider/provider.dart';
 
 enum TransactionFilter { all, income, expense, recurring }
 
 class TransactionProvider extends ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
   final NotificationService _notificationService = NotificationService();
+  BudgetProvider? _budgetProvider;
   List<Transaction> _transactions = [];
   List<Transaction> _filteredTransactions = [];
   DateTime _selectedMonth = DateTime.now();
@@ -23,6 +26,11 @@ class TransactionProvider extends ChangeNotifier {
   double get totalIncome => _totalIncome;
   double get totalExpense => _totalExpense;
   TransactionFilter get currentFilter => _currentFilter;
+
+  // Setter for BudgetProvider
+  void setBudgetProvider(BudgetProvider provider) {
+    _budgetProvider = provider;
+  }
 
   Future<void> init() async {
     await selectMonth(_selectedMonth);
@@ -64,16 +72,21 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   Future<void> _loadTransactionsForSelectedMonth() async {
-    // Get transactions from database for the selected month
-    var transactions =
-        await _databaseService.getTransactionsByMonth(_selectedMonth);
+    try {
+      // Get transactions from database for the selected month
+      var transactions =
+          await _databaseService.getTransactionsByMonth(_selectedMonth);
 
-    // Cast the dynamic list to List<Transaction>
-    _transactions = transactions.cast<Transaction>();
-    _filteredTransactions = List.from(_transactions);
+      // Cast the dynamic list to List<Transaction>
+      _transactions = transactions.cast<Transaction>();
+      _filteredTransactions = List.from(_transactions);
 
-    // Calculate totals and category expenses
-    _calculateTotals();
+      // Calculate totals and category expenses
+      _calculateTotals();
+    } catch (e) {
+      print('Error loading transactions: $e');
+      rethrow;
+    }
   }
 
   Future<void> _calculateTotals() async {
@@ -101,13 +114,21 @@ class TransactionProvider extends ChangeNotifier {
 
   Future<void> addTransaction(Transaction transaction) async {
     try {
+      // Insert into database
       await _databaseService.insertTransaction(transaction);
 
+      // Schedule notification if recurring
       if (transaction.isRecurring) {
         await _notificationService.scheduleNotification(transaction);
       }
 
+      // Refresh data
       await _refreshData();
+
+      // Check budget threshold if it's an expense
+      if (transaction.type == TransactionType.expense && _budgetProvider != null) {
+        await _budgetProvider!.checkBudgetThreshold(_totalExpense);
+      }
     } catch (e) {
       print('Error adding transaction: $e');
       rethrow;
@@ -116,6 +137,7 @@ class TransactionProvider extends ChangeNotifier {
 
   Future<void> updateTransaction(Transaction transaction) async {
     try {
+      // Update in database
       await _databaseService.updateTransaction(transaction);
 
       // Handle notification updates
@@ -125,7 +147,13 @@ class TransactionProvider extends ChangeNotifier {
         await _notificationService.cancelNotification(transaction);
       }
 
+      // Refresh data
       await _refreshData();
+
+      // Check budget threshold if it's an expense
+      if (transaction.type == TransactionType.expense && _budgetProvider != null) {
+        await _budgetProvider!.checkBudgetThreshold(_totalExpense);
+      }
     } catch (e) {
       print('Error updating transaction: $e');
       rethrow;
@@ -142,6 +170,11 @@ class TransactionProvider extends ChangeNotifier {
       }
 
       await _refreshData();
+
+      // Check budget threshold if it was an expense
+      if (transaction.type == TransactionType.expense && _budgetProvider != null) {
+        await _budgetProvider!.checkBudgetThreshold(_totalExpense);
+      }
     } catch (e) {
       print('Error deleting transaction: $e');
       rethrow;

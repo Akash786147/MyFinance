@@ -167,7 +167,22 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   }
 
   Widget _buildCategorySelector() {
-    final categories = Provider.of<CategoryProvider>(context).categories;
+    final categories = [
+      Category(id: '1', name: 'Food & Dining', icon: Icons.restaurant, color: Colors.orange),
+      Category(id: '2', name: 'Transportation', icon: Icons.directions_car, color: Colors.blue),
+      Category(id: '3', name: 'Housing', icon: Icons.home, color: Colors.brown),
+      Category(id: '4', name: 'Entertainment', icon: Icons.movie, color: Colors.purple),
+      Category(id: '5', name: 'Shopping', icon: Icons.shopping_bag, color: Colors.pink),
+      Category(id: '6', name: 'Utilities', icon: Icons.power, color: Colors.red),
+      Category(id: '7', name: 'Healthcare', icon: Icons.medical_services, color: Colors.green),
+      Category(id: '8', name: 'Travel', icon: Icons.flight, color: Colors.teal),
+      Category(id: '9', name: 'Education', icon: Icons.school, color: Colors.indigo),
+      Category(id: '10', name: 'Groceries', icon: Icons.shopping_cart, color: Colors.lightGreen),
+      Category(id: '11', name: 'Subscriptions', icon: Icons.subscriptions, color: Colors.deepPurple),
+      Category(id: '12', name: 'Personal Care', icon: Icons.spa, color: Colors.cyan),
+      Category(id: '13', name: 'Gifts & Donations', icon: Icons.card_giftcard, color: Colors.amber),
+      Category(id: '14', name: 'Other', icon: Icons.more_horiz, color: Colors.grey),
+    ];
 
     return Container(
       decoration: BoxDecoration(
@@ -197,9 +212,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
+              height: 120,
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  childAspectRatio: 1,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   final category = categories[index];
@@ -212,16 +232,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                       });
                     },
                     child: Container(
-                      width: 80,
-                      margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Theme.of(context).colorScheme.primaryContainer
+                            ? category.color.withOpacity(0.2)
                             : Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected
-                              ? Theme.of(context).colorScheme.primary
+                              ? category.color
                               : Colors.grey.withOpacity(0.2),
                           width: 1.5,
                         ),
@@ -232,23 +250,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                           Icon(
                             category.icon,
                             color: isSelected
-                                ? Theme.of(context).colorScheme.primary
-                                : category.color,
-                            size: 28,
+                                ? category.color
+                                : category.color.withOpacity(0.7),
+                            size: 24,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
                             category.name,
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 10,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
                               color: isSelected
-                                  ? Theme.of(context).colorScheme.primary
+                                  ? category.color
                                   : Theme.of(context).colorScheme.onSurface,
                             ),
                             textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -398,6 +418,43 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     );
   }
 
+  Widget _buildAmountField() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: TextFormField(
+          controller: _amountController,
+          decoration: InputDecoration(
+            labelText: 'Amount',
+            border: InputBorder.none,
+            prefixText: '₹ ',
+            prefixStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 16,
+            ),
+          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+          ],
+          validator: _validateAmount,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -413,11 +470,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: 150,
-                    height: 150,
-                    child: Lottie.network(
-                      'https://lottie.host/b66e4ae1-7109-4ded-be24-34ff3f6f247d/JgkpBIuEBz.json',
-                      fit: BoxFit.contain,
+                    width: 100,
+                    height: 100,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -448,6 +507,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                         children: [
                           Expanded(
                             child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
@@ -456,8 +516,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                                     height: 70,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(12),
-                                      color:
-                                          Theme.of(context).colorScheme.surface,
+                                      color: Theme.of(context).colorScheme.surface,
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.05),
@@ -476,50 +535,34 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                                                 _type = TransactionType.expense;
                                               });
                                             },
-                                            child: Container(
+                                            child: AnimatedContainer(
+                                              duration: const Duration(milliseconds: 200),
                                               decoration: BoxDecoration(
-                                                color: _type ==
-                                                        TransactionType.expense
-                                                    ? Theme.of(context)
-                                                        .colorScheme
-                                                        .error
-                                                        .withOpacity(0.2)
+                                                color: _type == TransactionType.expense
+                                                    ? Theme.of(context).colorScheme.error.withOpacity(0.2)
                                                     : null,
-                                                borderRadius:
-                                                    const BorderRadius.only(
+                                                borderRadius: const BorderRadius.only(
                                                   topLeft: Radius.circular(12),
-                                                  bottomLeft:
-                                                      Radius.circular(12),
+                                                  bottomLeft: Radius.circular(12),
                                                 ),
                                               ),
                                               child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
                                                   Icon(
                                                     Icons.arrow_upward,
-                                                    color: _type ==
-                                                            TransactionType
-                                                                .expense
-                                                        ? Theme.of(context)
-                                                            .colorScheme
-                                                            .error
+                                                    color: _type == TransactionType.expense
+                                                        ? Theme.of(context).colorScheme.error
                                                         : Colors.grey,
                                                   ),
                                                   const SizedBox(height: 4),
                                                   Text(
                                                     'Expense',
                                                     style: TextStyle(
-                                                      color: _type ==
-                                                              TransactionType
-                                                                  .expense
-                                                          ? Theme.of(context)
-                                                              .colorScheme
-                                                              .error
+                                                      color: _type == TransactionType.expense
+                                                          ? Theme.of(context).colorScheme.error
                                                           : Colors.grey,
-                                                      fontWeight: _type ==
-                                                              TransactionType
-                                                                  .expense
+                                                      fontWeight: _type == TransactionType.expense
                                                           ? FontWeight.bold
                                                           : FontWeight.normal,
                                                     ),
@@ -536,29 +579,23 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                                                 _type = TransactionType.income;
                                               });
                                             },
-                                            child: Container(
+                                            child: AnimatedContainer(
+                                              duration: const Duration(milliseconds: 200),
                                               decoration: BoxDecoration(
-                                                color: _type ==
-                                                        TransactionType.income
-                                                    ? Colors.green
-                                                        .withOpacity(0.2)
+                                                color: _type == TransactionType.income
+                                                    ? Colors.green.withOpacity(0.2)
                                                     : null,
-                                                borderRadius:
-                                                    const BorderRadius.only(
+                                                borderRadius: const BorderRadius.only(
                                                   topRight: Radius.circular(12),
-                                                  bottomRight:
-                                                      Radius.circular(12),
+                                                  bottomRight: Radius.circular(12),
                                                 ),
                                               ),
                                               child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
+                                                mainAxisAlignment: MainAxisAlignment.center,
                                                 children: [
                                                   Icon(
                                                     Icons.arrow_downward,
-                                                    color: _type ==
-                                                            TransactionType
-                                                                .income
+                                                    color: _type == TransactionType.income
                                                         ? Colors.green
                                                         : Colors.grey,
                                                   ),
@@ -566,14 +603,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                                                   Text(
                                                     'Income',
                                                     style: TextStyle(
-                                                      color: _type ==
-                                                              TransactionType
-                                                                  .income
+                                                      color: _type == TransactionType.income
                                                           ? Colors.green
                                                           : Colors.grey,
-                                                      fontWeight: _type ==
-                                                              TransactionType
-                                                                  .income
+                                                      fontWeight: _type == TransactionType.income
                                                           ? FontWeight.bold
                                                           : FontWeight.normal,
                                                     ),
@@ -617,40 +650,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                                   ),
 
                                   // Amount
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                      color:
-                                          Theme.of(context).colorScheme.surface,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 5,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      child: TextFormField(
-                                        controller: _amountController,
-                                        decoration: const InputDecoration(
-                                          labelText: 'Amount',
-                                          border: InputBorder.none,
-                                          prefixText: '₹ ',
-                                        ),
-                                        keyboardType: const TextInputType
-                                            .numberWithOptions(decimal: true),
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.allow(
-                                              RegExp(r'^\d+\.?\d{0,2}')),
-                                        ],
-                                        validator: _validateAmount,
-                                      ),
-                                    ),
-                                  ),
+                                  _buildAmountField(),
 
                                   // Date picker
                                   Container(
@@ -712,9 +712,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: _saveTransaction,
+                            onPressed: _isLoading ? null : _saveTransaction,
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             child: Text(
                               widget.transaction == null

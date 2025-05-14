@@ -17,6 +17,10 @@ class SummaryCard extends StatelessWidget {
     this.isIncome = false,
   }) : super(key: key);
 
+  String _formatCurrency(double amount) {
+    return '₹${amount.toStringAsFixed(2)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -62,7 +66,7 @@ class SummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              numberFormat.format(amount),
+              _formatCurrency(amount),
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: cardColor,
