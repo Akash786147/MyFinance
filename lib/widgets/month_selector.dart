@@ -20,7 +20,7 @@ class MonthSelector extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 195, 212, 237),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -66,8 +66,8 @@ class MonthSelector extends StatelessWidget {
                         Icons.calendar_today,
                         size: 16,
                         color: isCurrentMonth
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface.withOpacity(0.6),
+                            ? Colors.black
+                            : Colors.grey,
                       ),
                     ],
                   ),

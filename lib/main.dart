@@ -12,6 +12,7 @@ import 'screens/auth_check_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/auth_service.dart';
 import 'screens/login_screen.dart';
+import 'providers/budget_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +20,7 @@ void main() async {
   // Initialize notification service
   final notificationService = NotificationService();
   await notificationService.initialize();
+  
   runApp(const MyApp());
 }
 
@@ -31,18 +33,35 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => BudgetProvider()),
       ],
       child: MaterialApp(
-        title: 'MyFinance',
+        title: 'KharchaCheck',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
+          colorScheme: const ColorScheme(
+            brightness: Brightness.light,
+            primary: Colors.black,
+            onPrimary: Colors.white,
+            secondary: Colors.grey,
+            onSecondary: Colors.black,
+            error: Colors.black,
+            onError: Colors.white,
+            background: Colors.white,
+            onBackground: Colors.black,
+            surface: Colors.white,
+            onSurface: Colors.black,
           ),
           scaffoldBackgroundColor: Colors.white,
-          dividerColor: Colors.grey[300],
-          textTheme: GoogleFonts.poppinsTextTheme(),
+          dividerColor: Colors.grey,
+          textTheme: GoogleFonts.poppinsTextTheme(
+            ThemeData.light().textTheme.apply(
+              bodyColor: Colors.black,
+              displayColor: Colors.black,
+            ),
+          ),
           cardTheme: CardTheme(
+            color: Colors.white,
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -50,6 +69,8 @@ class MyApp extends StatelessWidget {
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -57,21 +78,29 @@ class MyApp extends StatelessWidget {
             ),
           ),
           appBarTheme: AppBarTheme(
-            backgroundColor: const Color.fromARGB(255, 106, 142, 199),
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
             elevation: 2,
             centerTitle: true,
             titleTextStyle: GoogleFonts.poppins(
+              color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
+            iconTheme: const IconThemeData(color: Colors.white),
           ),
           floatingActionButtonTheme: FloatingActionButtonThemeData(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
           ),
           bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+            backgroundColor: Colors.white,
+            selectedItemColor: Colors.black,
+            unselectedItemColor: Colors.grey,
             elevation: 8,
           ),
         ),
@@ -138,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MyFinance'),
+        title: const Text('KharchaCheck'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -152,7 +181,7 @@ class _MyHomePageState extends State<MyHomePage> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withOpacity(0),
               blurRadius: 6,
               offset: const Offset(0, -1),
             ),

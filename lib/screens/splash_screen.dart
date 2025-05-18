@@ -129,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen>
                           child: ScaleTransition(
                             scale: _scaleAnimation,
                             child: const Text(
-                              'MyFinance',
+                              'KharchaCheck',
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,

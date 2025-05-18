@@ -1,132 +1,116 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
-import '../widgets/transaction_list_item.dart';
+import '../providers/category_provider.dart';
 import '../models/transaction.dart';
+import 'package:intl/intl.dart';
 
 class RecentTransactions extends StatelessWidget {
   final int limit;
 
   const RecentTransactions({Key? key, this.limit = 5}) : super(key: key);
 
+  String _formatCurrency(double amount) {
+    return '₹${amount.toStringAsFixed(2)}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final transactionProvider = Provider.of<TransactionProvider>(context);
-    final transactions = transactionProvider.transactions;
+    final transactions = Provider.of<TransactionProvider>(context).transactions;
+    final categories = Provider.of<CategoryProvider>(context).categories;
 
-    if (transactions.isEmpty) {
+    // Sort transactions by date (most recent first) and take the limit
+    final recentTransactions = transactions
+        .where((t) => t.date.month == DateTime.now().month)
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    if (recentTransactions.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20.0),
-          child: Text(
-            'No transactions for this month',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.disabledColor,
-            ),
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              Icon(
+                Icons.receipt_long,
+                size: 64,
+                color: Theme.of(context).disabledColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No transactions this month',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).disabledColor,
+                    ),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    // Get the limited number of transactions
-    final limitedTransactions = transactions.take(limit).toList();
-
-    return Column(
-      children: [
-        for (final transaction in limitedTransactions)
-          TransactionListItem(
-            transaction: transaction,
-            onTap: () {
-              // Navigation to transaction details can be handled by parent
-              Navigator.pushNamed(
-                context,
-                '/transaction_details',
-                arguments: transaction,
-              ).catchError((e) {
-                // If route doesn't exist, show a simple dialog with details
-                _showTransactionDetails(context, transaction);
-                return null;
-              });
-            },
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: recentTransactions.length > limit ? limit : recentTransactions.length,
+      itemBuilder: (context, index) {
+        final transaction = recentTransactions[index];
+        final category = categories.firstWhere(
+          (c) => c.id == transaction.categoryId,
+          orElse: () => Category(
+            id: 'other',
+            name: 'Other',
+            icon: Icons.more_horiz,
+            color: Colors.grey,
           ),
-      ],
-    );
-  }
+        );
 
-  // Fallback if transaction details route isn't defined
-  void _showTransactionDetails(BuildContext context, Transaction transaction) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(transaction.title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow(
-              context,
-              'Amount',
-              '₹ ${transaction.amount.toStringAsFixed(2)}',
-              Icons.attach_money,
-            ),
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              context,
-              'Type',
-              transaction.type == TransactionType.expense
-                  ? 'Expense'
-                  : 'Income',
-              transaction.type == TransactionType.expense
-                  ? Icons.arrow_downward
-                  : Icons.arrow_upward,
-            ),
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              context,
-              'Date',
-              transaction.date.toString().substring(0, 10),
-              Icons.calendar_today,
-            ),
-            if (transaction.isRecurring) ...[
-              const SizedBox(height: 8),
-              _buildDetailRow(
-                context,
-                'Recurring',
-                'Yes',
-                Icons.repeat,
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: (transaction.type == TransactionType.income
+                        ? Colors.green
+                        : category.color)
+                    .withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+              child: Icon(
+                transaction.type == TransactionType.income
+                    ? Icons.arrow_downward
+                    : category.icon,
+                color: transaction.type == TransactionType.income
+                    ? Colors.green
+                    : category.color,
+              ),
+            ),
+            title: Text(
+              transaction.title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            subtitle: Text(
+              DateFormat.yMMMd().format(transaction.date),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 12,
+              ),
+            ),
+            trailing: Text(
+              _formatCurrency(transaction.amount),
+              style: TextStyle(
+                color: transaction.type == TransactionType.income
+                    ? Colors.green
+                    : Theme.of(context).colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(
-      BuildContext context, String label, String value, IconData icon) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: theme.colorScheme.primary),
-        const SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          value,
-          style: theme.textTheme.bodyMedium,
-        ),
-      ],
+        );
+      },
     );
   }
 }

@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_service.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -16,6 +17,8 @@ class NotificationService {
   final StreamController<Notification> _notificationStreamController =
       StreamController<Notification>.broadcast();
 
+  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+
   Stream<Notification> get notificationStream =>
       _notificationStreamController.stream;
   Timer? _checkNotificationsTimer;
@@ -23,6 +26,29 @@ class NotificationService {
 
   Future<void> initialize() async {
     tz.initializeTimeZones();
+
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings();
+    
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    await _notifications.initialize(initSettings);
+
+    // Create notification channel for budget alerts
+    const androidChannel = AndroidNotificationChannel(
+      'budget_alerts',
+      'Budget Alerts',
+      description: 'Notifications for budget threshold alerts',
+      importance: Importance.high,
+    );
+
+    await _notifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
 
     // Start checking for notifications
     _checkNotificationsTimer = Timer.periodic(
@@ -146,6 +172,30 @@ class NotificationService {
   void dispose() {
     _checkNotificationsTimer?.cancel();
     _notificationStreamController.close();
+  }
+
+  Future<void> showBudgetAlert(double currentSpending, double budgetAmount) async {
+    const androidDetails = AndroidNotificationDetails(
+      'budget_alerts',
+      'Budget Alerts',
+      channelDescription: 'Notifications for budget threshold alerts',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const iosDetails = DarwinNotificationDetails();
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notifications.show(
+      0,
+      'Budget Alert',
+      'You have reached ${(currentSpending / budgetAmount * 100).toStringAsFixed(1)}% of your monthly budget!',
+      details,
+    );
   }
 }
 
